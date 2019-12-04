@@ -1,0 +1,22 @@
+undirected weighted
+b=f=10
+b=g=11
+f=g=11
+e=f=12
+c=g=17
+a=f=17
+d=f=21
+b=c=21
+b=d=21
+a=d=23
+b=e=26
+a=b=31
+a=c=32
+c=d=37
+d=e=39
+a=e=41
+e=g=42
+c=f=43
+a=g=46
+d=g=49
+c=e=50
