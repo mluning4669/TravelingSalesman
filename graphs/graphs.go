@@ -9,70 +9,80 @@ import (
 
 //Graph an adjacency list with an associated map to map vertex names to indeces in adjlist
 type Graph struct {
-	dict      map[string]int
+	Dict      map[string]int
+	Idict     map[int]string //inverse of dict
 	AdjList   []List
-	vertCount int
+	VertCount int
 	directed  bool
 	weighted  bool
 }
 
 //NewGraph a constructor for type Graph
 func NewGraph(directed bool, weighted bool) *Graph {
-	g := Graph{directed: directed, vertCount: 0, weighted: weighted}
-	g.dict = make(map[string]int)
+	g := Graph{directed: directed, VertCount: 0, weighted: weighted}
+	g.Dict = make(map[string]int)
+	g.Idict = make(map[int]string)
 	g.AdjList = make([]List, 0)
 	return &g
 }
 
 //Node node in homebrew doubly linked list
 type Node struct {
-	Val    int
-	Weight *float64
-	parent *Node
-	prev   *Node
-	next   *Node
+	Val       int
+	HeapLabel string
+	Weight    *float64
+	AttCost   float64
+	Label     string
+	Prev      *Node
+	Next      *Node
+	Parent    *Node
 }
 
 //List tail, current and head of doubly linked list. An array of Lists will serve as the adjacency list. Use a map[string]int to map the vertices to the array
 type List struct {
-	tail    *Node
+	Tail    *Node
 	Head    *Node
-	current *Node
+	Current *Node
 }
+
+//func (g *Graph) GetKey
 
 //InsertVertex inserts a vertex with no neigbors. If v is found to exist in the Graph's dictionary then it already exists so return
 func (g *Graph) InsertVertex(v string) {
-	_, ok := g.dict[v]
+	_, ok := g.Dict[v]
 	if ok {
 		return
 	}
 	//if v is not in the graph dictionary then add it to the adjacency list
-	g.vertCount++
-	e := g.vertCount - 1 //because of zero-based indexing
-	g.dict[v] = e
+	g.VertCount++
+	e := g.VertCount - 1 //because of zero-based indexing
+	g.Dict[v] = e
+	g.Idict[e] = v
 	g.AdjList = append(g.AdjList, List{nil, nil, nil})
 }
 
 //InsertEdge inserts two vertices as an edge into graph. If the graph is directed then v1 is the head and v2 is the tail i.e v1->v2
 func (g *Graph) InsertEdge(v1 string, v2 string, weight *float64) {
-	e1, ok1 := g.dict[v1]
+	e1, ok1 := g.Dict[v1]
 	if !ok1 {
-		g.vertCount++
-		e1 = g.vertCount - 1 //because of zero-based indexing
-		g.dict[v1] = e1
+		g.VertCount++
+		e1 = g.VertCount - 1 //because of zero-based indexing
+		g.Dict[v1] = e1
+		g.Idict[e1] = v1
 		g.AdjList = append(g.AdjList, List{nil, nil, nil})
 	}
 
-	e2, ok2 := g.dict[v2]
+	e2, ok2 := g.Dict[v2]
 	if !ok2 {
-		g.vertCount++
-		e2 = g.vertCount - 1 //because of zero-based indexing
-		g.dict[v2] = e2
+		g.VertCount++
+		e2 = g.VertCount - 1 //because of zero-based indexing
+		g.Dict[v2] = e2
+		g.Idict[e2] = v2
 		g.AdjList = append(g.AdjList, List{nil, nil, nil})
 	}
 
 	//Insert verteces into adjacency list
-	newNode1 := &Node{Val: e2, Weight: weight, prev: nil, next: nil}
+	newNode1 := &Node{Val: e2, Weight: weight, Prev: nil, Next: nil}
 	g.AdjList[e1].insertNode(newNode1)
 
 	//check to see if g is directed or if v1 = v2 (meaning you have a edge with the same vertex).
@@ -82,7 +92,7 @@ func (g *Graph) InsertEdge(v1 string, v2 string, weight *float64) {
 	}
 
 	//if not then insert e1 into e2's list
-	newNode2 := &Node{Val: e1, Weight: weight, prev: nil, next: nil}
+	newNode2 := &Node{Val: e1, Weight: weight, Prev: nil, Next: nil}
 	g.AdjList[e2].insertNode(newNode2)
 }
 
@@ -90,13 +100,13 @@ func (g *Graph) InsertEdge(v1 string, v2 string, weight *float64) {
 func (l *List) insertNode(newNode *Node) error {
 	if l.Head == nil {
 		l.Head = newNode
-		l.tail = newNode
+		l.Tail = newNode
 	} else {
-		currentNode := l.tail
-		currentNode.next = newNode
-		newNode.prev = l.tail
+		currentNode := l.Tail
+		currentNode.Next = newNode
+		newNode.Prev = l.Tail
 	}
-	l.tail = newNode
+	l.Tail = newNode
 	return nil
 }
 
@@ -158,64 +168,53 @@ func buildUnweightedGraph(dir bool, lines []string) *Graph {
 }
 
 func printWeightedGraph(graph *Graph) {
-	//create a map that swaps the keys and values of the graph's dictionary
-	rdict := make(map[int]string)
-	for k, v := range graph.dict {
-		rdict[v] = k
-	}
-
 	for i, v := range graph.AdjList {
-		v.current = v.Head
+		v.Current = v.Head
 		//print the current vertex with the current index of the adjacency list
-		fmt.Print(rdict[i], ": ")
-		//check is v.current is nil to test for isolated nodes
-		if v.current == nil {
+		fmt.Print(graph.Idict[i], ": ")
+		//check is v.Current is nil to test for isolated nodes
+		if v.Current == nil {
 			fmt.Println()
 			continue
 		}
 		//iterate over the neighbors of v
 		for {
-			fmt.Print("(", rdict[v.current.Val], ", ", *v.current.Weight, ")")
-			if v.current == v.tail {
+			fmt.Print("(", graph.Idict[v.Current.Val], ", ", *v.Current.Weight, ")")
+			if v.Current == v.Tail {
 				break
 			}
 			fmt.Print(", ")
-			v.current = v.current.next
+			v.Current = v.Current.Next
 		}
 		//print newline and reset current to head. It seems like the polite thing to do.
 		fmt.Println()
-		v.current = v.Head
+		v.Current = v.Head
 	}
 }
 
 func printUnweightedGraph(graph *Graph) {
-	//create a map that swaps the keys and values of the graph's dictionary
-	rdict := make(map[int]string)
-	for k, v := range graph.dict {
-		rdict[v] = k
-	}
 
 	for i, v := range graph.AdjList {
-		v.current = v.Head
+		v.Current = v.Head
 		//print the current vertex with the current index of the adjacency list
-		fmt.Print(rdict[i], ": ")
-		//check is v.current is nil to test for isolated nodes
-		if v.current == nil {
+		fmt.Print(graph.Idict[i], ": ")
+		//check is v.Current is nil to test for isolated nodes
+		if v.Current == nil {
 			fmt.Println()
 			continue
 		}
 		//iterate over the neighbors of v
 		for {
-			fmt.Print(rdict[v.current.Val])
-			if v.current == v.tail {
+			fmt.Print(graph.Idict[v.Current.Val])
+			if v.Current == v.Tail {
 				break
 			}
 			fmt.Print(", ")
-			v.current = v.current.next
+			v.Current = v.Current.Next
 		}
 		//print newline and reset current to head. It seems like the polite thing to do.
 		fmt.Println()
-		v.current = v.Head
+		v.Current = v.Head
 	}
 }
 
