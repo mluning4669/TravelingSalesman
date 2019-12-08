@@ -64,6 +64,20 @@ func (p *Path) RemoveFromPath() {
 	p.PathCount--
 }
 
+//PrintPath prints path in it's entirety
+func (p *Path) PrintPath() {
+	vert := p.PathList.Head
+
+	for vert.Next != nil {
+		fmt.Print(vert.Val)
+		if vert.Next != nil {
+			fmt.Print(", ")
+		}
+	}
+
+	fmt.Println()
+}
+
 //InsertVertex inserts a vertex with no neigbors. If v is found to exist in the Graph's dictionary then it already exists so return
 func (g *Graph) InsertVertex(v string) {
 	_, ok := g.Dict[v]
