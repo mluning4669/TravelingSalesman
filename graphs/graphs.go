@@ -73,6 +73,7 @@ func (p *Path) PrintPath() {
 		if vert.Next != nil {
 			fmt.Print(", ")
 		}
+		vert = vert.Next
 	}
 
 	fmt.Println()
