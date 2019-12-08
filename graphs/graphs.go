@@ -26,6 +26,12 @@ func NewGraph(directed bool, weighted bool) *Graph {
 	return &g
 }
 
+//Path a representation of a path through a graph with the assumption that no node is visited more than once
+type Path struct {
+	PathList  *List
+	PathCount int
+}
+
 //Node node in homebrew doubly linked list
 type Node struct {
 	Val       int
@@ -45,7 +51,18 @@ type List struct {
 	Current *Node
 }
 
-//func (g *Graph) GetKey
+//AppendToPath add node to end of PathList and bump PathCount by 1
+func (p *Path) AppendToPath(node *Node) {
+	p.PathList.insertNode(node)
+	p.PathCount++
+}
+
+//RemoveFromPath remove node from end of PathList and shrink PathCount by 1
+func (p *Path) RemoveFromPath() {
+	p.PathList.Tail = p.PathList.Tail.Prev
+	p.PathList.Tail.Next = nil
+	p.PathCount--
+}
 
 //InsertVertex inserts a vertex with no neigbors. If v is found to exist in the Graph's dictionary then it already exists so return
 func (g *Graph) InsertVertex(v string) {
